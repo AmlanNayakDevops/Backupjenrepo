@@ -1,0 +1,93 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1520.v56d65e3b_4566">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@2.2255.v56a_15e805f12"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@2.2255.v56a_15e805f12">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>Run_Test</string>
+        <string>Deploy</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>3</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+        <removeLastBuild>false</removeLastBuild>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>Deploy</name>
+          <description>Deploy_env</description>
+          <defaultValue>Dev</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>Run_Test</name>
+          <description>run_test</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4106.v7a_8a_8176d450">
+    <script>pipeline {
+    agent {label &apos;Agent-1&apos;}
+    
+    parameters {
+        string(name: &apos;Deploy&apos;, defaultValue: &apos;Dev&apos;, description: &apos;Deploy_env&apos; )
+        booleanParam(name: &apos;Run_Test&apos;, defaultValue: true, description:&apos;run_test&apos;)
+    }
+    environment {
+        REGION= &apos;ap-south-1&apos;
+        BUILD_VERSION= &quot;1.0.${env.BUILD_NUMBER}&quot;
+    }
+    stages {
+        stage(&apos;Print_environment_vars&apos;) {
+            steps {
+                echo &quot;BUILD_NUMBER: ${env.BUILD_NUMBER}&quot;
+                echo &quot;Build_Id: ${env.BUILD_ID}&quot;
+                echo &quot;Job_Name: ${env.JOB_NAME}&quot;
+                echo &quot;Build_Url: ${env.BUILD_URL}&quot;
+                echo &quot;Workspace: ${env.WORKSPACE}&quot;
+                echo &quot;Node_Name: ${env.NODE_NAME}&quot;
+            }
+        }
+        stage(&apos;environment_vars&apos;) {
+            steps {
+                echo &quot;deploy: ${params.Deploy}&quot;
+                echo &quot;run_test: ${params.Run_Test}&quot;
+            }    
+        } 
+        stage(&apos;Custom_environment_vars&apos;) {
+            steps {
+                echo &quot;Region: ${env.REGION}&quot;
+                echo &quot;run_test: ${env.BUILD_VERSION}&quot;
+            }    
+        } 
+        stage(&apos;Dynamic_environment_vars&apos;) {
+            steps {
+                script {
+                env.RUN_TIME = &quot;runtime-${env.BUILD_NUMBER}&quot;
+                echo &quot;RUN_TIME: ${env.RUN_TIME}&quot;
+                }
+            }    
+        } 
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

@@ -1,0 +1,117 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1520.v56d65e3b_4566">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@2.2255.v56a_15e805f12"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@2.2255.v56a_15e805f12">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>Run_Test</string>
+        <string>BRANCH_NAME</string>
+        <string>build_case</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>2</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+        <removeLastBuild>false</removeLastBuild>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH_NAME</name>
+          <description>this my repo branch</description>
+          <defaultValue>main</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>Run_Test</name>
+          <description>run test case</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>build_case</name>
+          <description>build the repo</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>debug</string>
+              <string>release</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@4106.v7a_8a_8176d450">
+    <script>pipeline {
+    agent any
+
+    tools {
+        maven &apos;maven 3.9&apos;
+        jdk &apos;jdk 17&apos;
+    }
+
+    parameters {
+        string(name: &apos;BRANCH_NAME&apos;, defaultValue: &apos;main&apos;, description: &apos;this my repo branch&apos;)
+        booleanParam(name: &apos;Run_Test&apos;, defaultValue: true, description: &apos;run test case&apos;)
+        choice(name: &apos;build_case&apos;, choices: [&apos;debug&apos;,&apos;release&apos;], description: &apos;build the repo&apos;)
+    }
+
+    stages {
+        stage(&apos;git checkout&apos;) {
+            steps {
+                git branch: &quot;${params.BRANCH_NAME}&quot;, url: &apos;https://github.com/AmlanNayakDevops/Boardgame.git&apos;
+            }
+        }
+
+        stage(&apos;compile&apos;) {
+            steps {
+                echo &apos;Compiling package&apos;
+                sh &apos;mvn compile&apos;
+            }
+        }
+
+        stage(&apos;test&apos;) {
+            when {
+                expression { return params.Run_Test }
+            }
+            steps {
+                echo &apos;Running test&apos;
+                sh &apos;mvn test&apos;
+            }
+        }
+
+        stage(&apos;Build&apos;) {
+            steps {
+                echo &quot;Build type selected: ${params.build_case}&quot;
+                sh &quot;mvn package -P${params.build_case}&quot;
+            }
+        }
+    }
+    post {
+        success {
+            echo &quot;Pipeline is successful&quot;
+        }
+        failure {
+            echo &quot;Pipeline is fail&quot;
+        }
+        always {
+            echo &quot; Pipeline completed in: ${new Date()} &quot;
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
